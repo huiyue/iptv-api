@@ -2,7 +2,8 @@ import os
 import re
 
 import utils.constants as constants
-from utils.tools import get_real_path, resource_path, format_name
+from utils.tools import get_real_path, resource_path, format_name,get_logger
+from logging import INFO
 
 
 class Alias:
@@ -10,7 +11,7 @@ class Alias:
         self.primary_to_aliases: dict[str, set[str]] = {}
         self.alias_to_primary: dict[str, str] = {}
         self.pattern_to_primary: list[tuple[re.Pattern, str]] = []
-
+        self.logger = get_logger(constants.regex_log_path, level=INFO, init=True)
         real_path = get_real_path(resource_path(constants.alias_path))
         if os.path.exists(real_path):
             with open(real_path, "r", encoding="utf-8") as f:
@@ -29,8 +30,9 @@ class Alias:
                                     pattern = re.compile(raw_pattern)
                                     if (pattern, primary) not in self.pattern_to_primary:
                                         self.pattern_to_primary.append((pattern, primary))
-                                except re.error:
-                                    pass
+                                except re.error as e:
+                                    # print(f"❌ alias regex compile error: primary={primary!r}, alias={alias!r}, error={e}")
+                                    self.logger.info(f"alias regex compile error: primary={primary!r}, alias={alias!r}, error={e}")
                         self.alias_to_primary[primary] = primary
 
     def get(self, name: str):

@@ -2,7 +2,7 @@
 
 for file in /iptv-api-config/*; do
   filename=$(basename "$file")
-  target_file="$APP_WORKDIR/config/$filename"
+      target_file="$APP_WORKDIR/config/$filename"
   if [ ! -e "$target_file" ]; then
     cp -r "$file" "$target_file"
   fi

@@ -97,7 +97,9 @@ def get_channel_data_from_file(channels, file, whitelist, open_local=config.open
     Get the channel data from the file
     """
     current_category = ""
-
+    added_urls=set()
+    logger = get_logger(constants.nomatch_log_path, level=INFO, init=True)
+    matched_local_names = set()
     for line in file:
         line = line.strip()
         if "#genre#" in line:
@@ -114,20 +116,29 @@ def get_channel_data_from_file(channels, file, whitelist, open_local=config.open
                     category_dict[name] = []
                     if name in whitelist:
                         for whitelist_url in whitelist[name]:
-                            category_dict[name].append(format_channel_data(whitelist_url, "whitelist"))
+                            if whitelist_url not in added_urls:
+                                category_dict[name].append(format_channel_data(whitelist_url, "whitelist"))
+                                added_urls.add(whitelist_url)
                     if live_data and name in live_data:
                         for live_url in live_data[name]:
-                            category_dict[name].append(format_channel_data(live_url, "live"))
+                            if live_url not in added_urls:
+                                category_dict[name].append(format_channel_data(live_url, "live"))
+                                added_urls.add(live_url)
                     if hls_data and name in hls_data:
                         for hls_url in hls_data[name]:
-                            category_dict[name].append(format_channel_data(hls_url, "hls"))
+                            if hls_url not in added_urls:
+                                category_dict[name].append(format_channel_data(hls_url, "hls"))
+                                added_urls.add(hls_url)
                     if open_local and local_data:
                         alias_names = channel_alias.get(name)
                         alias_names.update([name, format_name(name)])
                         for alias_name in alias_names:
                             if alias_name in local_data:
                                 for local_url in local_data[alias_name]:
-                                    category_dict[name].append(format_channel_data(local_url, "local"))
+                                    if local_url not in added_urls:
+                                        category_dict[name].append(format_channel_data(local_url, "local"))
+                                        added_urls.add(local_url)
+                                matched_local_names.add(alias_name)
                             elif alias_name.startswith("re:"):
                                 raw_pattern = alias_name[3:]
                                 try:
@@ -135,11 +146,20 @@ def get_channel_data_from_file(channels, file, whitelist, open_local=config.open
                                     for local_name in local_data:
                                         if re.match(pattern, local_name):
                                             for local_url in local_data[local_name]:
-                                                category_dict[name].append(format_channel_data(local_url, "local"))
+                                                if local_url not in added_urls:
+                                                    category_dict[name].append(format_channel_data(local_url, "local"))
+                                                    added_urls.add(local_url)
+                                            matched_local_names.add(local_name)
                                 except re.error:
                                     pass
-                if open_local and url:
+                if open_local and url and url not in added_urls:
                     category_dict[name].append(format_channel_data(url, "local"))
+                    added_urls.add(url)
+    if open_local and local_data:
+        unmatched = set(local_data.keys()) - matched_local_names
+        if unmatched:
+            for u in sorted(unmatched):
+                logger.info(f"local: {u}")
     return channels
 
 
@@ -722,6 +742,16 @@ def append_total_data(
                     )
                     print(f"{method.capitalize()}:", len(name_results), end=", ")
             print_channel_number(data, cate, name)
+    seen_urls: set[str] = set()
+    for category, subcats in data.items():
+        for subcat, channels in subcats.items():
+            unique_channels: list[ChannelData] = []
+            for ch in channels:
+                url = ch.get("url") if isinstance(ch, dict) else ch
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    unique_channels.append(ch)
+            subcats[subcat] = unique_channels
 
 
 async def test_speed(data, ipv6=False, callback=None):

@@ -47,7 +47,7 @@ async def get_channels_by_subscribe_urls(
             0,
         )
     hotel_name = constants.origin_map["hotel"]
-    logger = get_logger(constants.nomatch_log_path, level=INFO, init=True)
+    logger = get_logger(constants.nomatch_log_path, level=INFO, init=False)
 
     def process_subscribe_channels(subscribe_info: str | dict) -> defaultdict:
         region = ""
@@ -95,7 +95,7 @@ async def get_channels_by_subscribe_urls(
                     if name and url:
                         name = format_channel_name(name)
                         if names and name not in names:
-                            logger.info(f"{item["name"]},{item["url"]}")
+                            logger.info(f"subscribe: {item["name"]}")
                             continue
                         url_partition = url.partition("$")
                         url = url_partition[0]

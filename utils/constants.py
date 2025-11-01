@@ -51,6 +51,8 @@ statistic_log_path = os.path.join(output_dir, "log/statistic.log")
 
 nomatch_log_path = os.path.join(output_dir, "log/nomatch.log")
 
+regex_log_path = os.path.join(output_dir, "log/regex.log")
+
 log_path = os.path.join(output_dir, "log/log.log")
 
 url_host_pattern = re.compile(r"((https?|rtmp|rtsp)://)?([^:@/]+(:[^:@/]*)?@)?(\[[0-9a-fA-F:]+]|([\w-]+\.)+[\w-]+)")
