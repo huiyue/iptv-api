@@ -742,6 +742,7 @@ def append_total_data(
                     )
                     print(f"{method.capitalize()}:", len(name_results), end=", ")
             print_channel_number(data, cate, name)
+"""             
     seen_urls: set[str] = set()
     for category, subcats in data.items():
         for subcat, channels in subcats.items():
@@ -752,7 +753,7 @@ def append_total_data(
                     seen_urls.add(url)
                     unique_channels.append(ch)
             subcats[subcat] = unique_channels
-
+ """
 
 async def test_speed(data, ipv6=False, callback=None):
     """
@@ -899,6 +900,7 @@ def process_write_content(
     rtmp_type = ["live", "hls"] if live and hls else ["live"] if live else ["hls"] if hls else []
     open_url_info = config.open_url_info
     for cate, channel_obj in data.items():
+        seen_urls = set()
         content += f"{'\n\n' if not first_cate else ''}{cate},#genre#"
         first_cate = False
         channel_obj_keys = channel_obj.keys()
@@ -921,6 +923,9 @@ def process_write_content(
                 if open_url_info and item["extra_info"]:
                     item_url = add_url_info(item_url, item["extra_info"])
                 total_item_url = f"{rtmp_url or item_rtmp_url}{item['id']}" if rtmp_url or item_rtmp_url else item_url
+                if total_item_url in seen_urls:
+                    continue
+                seen_urls.add(total_item_url)
                 content += f"\n{name},{total_item_url}"
             if enable_log:
                 generate_channel_statistic(logger, cate, name, info_list)
